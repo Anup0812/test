@@ -204,44 +204,47 @@
         </div>
         {% endif %}
 
-        <div class="row mb-4 g-3">
-            <div class="col-md-5">
-                <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
-                    <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
-                        <i class="fas fa-chart-pie" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Health Distribution
-                    </h6>
-                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Overall status breakdown across all applications</p>
-                    <div id="donutChart" style="height:300px;"></div>
-                </div>
-            </div>
-            <div class="col-md-7">
+        <div class="row mb-4">
+            <div class="col-12">
                 <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
                     <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
                         <i class="fas fa-sitemap" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Tower &rarr; Application Hierarchy
                     </h6>
                     <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Drill-down view of health status by tower and application</p>
-                    <div id="sunburstChart" style="height:460px; min-height:400px;"></div>
+                    <div id="sunburstChart" style="height:500px; min-height:450px;"></div>
                 </div>
             </div>
         </div>
 
         <div class="row mb-4 g-3">
-            <div class="col-md-7">
+            <div class="col-md-4">
                 <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
                     <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
-                        <i class="fas fa-chart-bar" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Health Status by Tower
+                        <i class="fas fa-chart-pie" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Health Distribution
                     </h6>
-                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Stacked count of healthy / warning / failed per application tower</p>
-                    <div id="stackedBarChart" style="height:300px;"></div>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Overall status breakdown</p>
+                    <div id="donutChart" style="height:320px;"></div>
                 </div>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-8">
                 <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
                     <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
                         <i class="fas fa-tachometer-alt" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Avg. Health Score by Tower
                     </h6>
                     <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Average score (0–100) of all apps in each tower</p>
-                    <div id="scoreBarChart" style="height:300px;"></div>
+                    <div id="scoreBarChart" style="height:320px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
+                    <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
+                        <i class="fas fa-chart-bar" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Health Status by Tower
+                    </h6>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Stacked count of healthy / warning / failed per application tower</p>
+                    <div id="stackedBarChart" style="height:350px;"></div>
                 </div>
             </div>
         </div>
@@ -678,7 +681,7 @@ const CONFIG = { displayModeBar: false, responsive: true };
     Plotly.newPlot('donutChart', [trace], layout, CONFIG);
 })();
 
-/* ── 2. Sunburst (Eve-style Default Palette mapped to towerData) ── */
+/* ── 2. Sunburst (Eve-style dynamically colored by application status) ── */
 (function buildSunburst() {
     if (!towerData || towerData.length === 0) return;
 
@@ -687,6 +690,7 @@ const CONFIG = { displayModeBar: false, responsive: true };
     const parents = [];
     const values = [];
     const customdata = [];
+    const sliceColors = []; // Dynamic color array
 
     // 1. Root Node (Center)
     ids.push("root");
@@ -694,14 +698,13 @@ const CONFIG = { displayModeBar: false, responsive: true };
     parents.push("");
     values.push(0); // Will be calculated below
     customdata.push("<b>Platform Overview</b>");
+    sliceColors.push('transparent'); // Keep center hollow
 
     let totalApps = 0;
 
     // 2. Towers (Inner Ring)
     towerData.forEach((tower, tIdx) => {
         const towerId = `tower_${tIdx}`;
-
-        // Handle empty towers gracefully so they still render
         const appCount = tower.apps.length > 0 ? tower.apps.length : 1;
 
         ids.push(towerId);
@@ -710,6 +713,9 @@ const CONFIG = { displayModeBar: false, responsive: true };
         values.push(appCount);
         customdata.push(`<b>${tower.name}</b><br>Total Apps: ${tower.total}`);
 
+        // Give inner tower ring a neutral slate color so outer status colors stand out
+        sliceColors.push('#E2E8F0');
+
         totalApps += appCount;
 
         // 3. Applications (Outer Ring)
@@ -717,16 +723,20 @@ const CONFIG = { displayModeBar: false, responsive: true };
             ids.push(`${towerId}_app_${aIdx}`);
             labels.push(app.name);
             parents.push(towerId);
-            values.push(1); // Equal visual weight for each application slice
+            values.push(1); // Equal visual weight per app
 
-            // Format tooltip info for the dashboard
             const scoreText = app.score > 0 ? `<br>Score: ${app.score}%` : '<br>Not yet run';
             const statusText = app.status ? app.status.replace('_', ' ') : 'Unknown';
             customdata.push(`<b>${app.name}</b><br>Status: ${statusText}${scoreText}`);
+
+            // Map outer ring slices explicitly to their health status color
+            if (app.status === 'healthy') sliceColors.push(COLORS.healthy);
+            else if (app.status === 'warning') sliceColors.push(COLORS.warning);
+            else if (app.status === 'failed') sliceColors.push(COLORS.failed);
+            else sliceColors.push(COLORS.not_run);
         });
     });
 
-    // Update the root value to the total sum so proportions are correct
     values[0] = totalApps > 0 ? totalApps : 1;
 
     const trace = {
@@ -740,13 +750,11 @@ const CONFIG = { displayModeBar: false, responsive: true };
         hovertemplate: "%{customdata}<extra></extra>",
         textfont: {
             family: "'DM Sans', sans-serif",
-            size: 13,
-            color: '#475569'
+            size: 13
         },
         marker: {
-            // Plotly will automatically use its default vibrant color palette
-            // We just add the clean white borders from your sample image
-            line: { width: 1.5, color: '#ffffff' }
+            colors: sliceColors,
+            line: { width: 1.5, color: '#ffffff' } // Clean white borders
         }
     };
 
