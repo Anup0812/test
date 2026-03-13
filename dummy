@@ -1,14 +1,843 @@
-<div style="background:linear-gradient(135deg,#1D293D,#2D3F5A); border-radius:12px 12px 0 0; padding:0.85rem 1.4rem 0.85rem 1.6rem; position:relative; overflow:hidden;">
+{% extends "base.html" %}
 
-    <div style="position:absolute; top:-15px; right:15%; width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,0.04); z-index:0;"></div>
-    <div style="position:absolute; bottom:-30px; right:-10px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.04); z-index:0;"></div>
+{% block title %}Application Health Check - NPG Project Management{% endblock %}
 
-    <div style="position:relative; z-index:1; display:flex; align-items:center; gap:10px;">
-        <div style="width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-            <i class="fas fa-th-list" style="color:white; font-size:0.75rem;"></i>
+{% block content %}
+
+<!-- Plotly.js CDN -->
+<script src="{{ url_for('static', filename='js/plotly-3.3.0.min.js') }}"></script>
+<!-- ═══════════════════════════════════════════════════════════
+     BREADCRUMB
+═══════════════════════════════════════════════════════════ -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card rounded pt-2 ps-3" style="height:42px; border-radius:12px !important; border:1px solid #E2E8F0;">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0" style="gap:6px; align-items:center;">
+                    <i><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="12" fill="#AB1236"/><path d="M6 9.55L12 5L18 9.55V16.7C18 17.0448 17.8595 17.3754 17.6095 17.6192C17.3594 17.863 17.0203 18 16.6667 18H7.33333C6.97971 18 6.64057 17.863 6.39052 17.6192C6.14048 17.3754 6 17.0448 6 16.7V9.55Z" stroke="white" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 18V12H14V18" stroke="white" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+                    <li class="breadcrumb-items"><a href="{{ url_for('index') }}">Home</a></li>
+                    <i><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="#90A1B9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+                    <li class="breadcrumb-items-active">Dashboard</li>
+                </ol>
+            </nav>
         </div>
-        <span style="color:white; font-family:'DM Sans',sans-serif; font-weight:700; font-size:0.9rem;">Applications</span>
-        <span style="background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.9); border-radius:10px; padding:1px 9px; font-size:0.72rem; font-weight:600; margin-left:2px;">{{ tower.reports|length }}</span>
     </div>
-    
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HERO HEADER
+═══════════════════════════════════════════════════════════ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div style="background: linear-gradient(135deg, #1D293D 0%, #AB1236 100%); border-radius:16px; padding:2rem 2rem 1.75rem; position:relative; overflow:hidden;">
+            <!-- Background texture -->
+            <div style="position:absolute; top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.04); pointer-event:none"></div>
+            <div style="position:absolute; bottom:-30px; right:120px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.04); pointer-event:none"></div>
+
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3" style="position:relative;z-index:1;">
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Icon pill -->
+                    <div style="width:52px; height:52px; background:rgba(255,255,255,0.15); border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(255,255,255,0.2);">
+                        <i class="fas fa-heartbeat" style="font-size:1.4rem; color:white;"></i>
+                    </div>
+                    <div>
+                        <h1 style="font-family:'DM Sans',sans-serif; font-size:1.5rem; font-weight:700; color:white; margin:0; letter-spacing:-0.3px;">Application Health Check</h1>
+                        <p style="margin:0; color:rgba(255,255,255,0.72); font-size:0.87rem; margin-top:2px;">Real-time monitoring dashboard across all application towers</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    {% if user.role == 'admin' %}
+                    <a href="{{ url_for('application_health_check.create_tower') }}"
+                       style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35); color:white; border-radius:10px; padding:7px 16px; font-size:0.85rem; font-weight:600; text-decoration:none; transition:background .2s; font-family:'DM Sans',sans-serif;">
+                        <i class="fas fa-plus" style="font-size:0.75rem;"></i> Create Tower
+                    </a>
+                    {% endif %}
+                    
+                </div>
+            </div>
+
+            <!-- Quick KPI strip inside hero -->
+            <div class="d-flex gap-4 mt-3 flex-wrap" style="border-top:1px solid rgba(255,255,255,0.12); padding-top:1rem;">
+                <div style="color:rgba(255,255,255,0.9);">
+                    <span style="font-size:1.4rem; font-weight:700;">{{ total_towers }}</span>
+                    <span style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-left:5px;">Towers</span>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.15);"></div>
+                <div style="color:rgba(255,255,255,0.9);">
+                    <span style="font-size:1.4rem; font-weight:700;">{{ total_reports }}</span>
+                    <span style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-left:5px;">Applications</span>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.15);"></div>
+                <div>
+                    <span style="font-size:1.4rem; font-weight:700; color:#4ade80;">{{ healthy_reports }}</span>
+                    <span style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-left:5px;">Healthy</span>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.15);"></div>
+                <div>
+                    <span style="font-size:1.4rem; font-weight:700; color:#fbbf24;">{{ warning_reports }}</span>
+                    <span style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-left:5px;">Warnings</span>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.15);"></div>
+                <div>
+                    <span style="font-size:1.4rem; font-weight:700; color:#f87171;">{{ failed_reports }}</span>
+                    <span style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-left:5px;">Failed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB NAVIGATION
+═══════════════════════════════════════════════════════════ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="cards" style="border-radius:12px; overflow:hidden; padding:0;">
+            <ul class="nav" id="dashboardTabs" style="border-bottom:2px solid #E2E8F0; padding:0 1.25rem; background:white; margin:0; gap:2px;">
+                <li class="nav-item">
+                    <a class="nav-link active" id="overall-tab" data-bs-toggle="tab" href="#overallStatus" role="tab"
+                       style="font-family:'DM Sans',sans-serif; font-weight:600; font-size:0.88rem; color:#1D293D; padding:0.9rem 1.25rem; border:none; border-bottom:3px solid #AB1236; background:none; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:7px;">
+                        <i class="fas fa-th-large" style="font-size:0.85rem;"></i>
+                        Overall Status
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="towers-tab" data-bs-toggle="tab" href="#towersDashboard" role="tab"
+                       style="font-family:'DM Sans',sans-serif; font-weight:600; font-size:0.88rem; color:#6c757d; padding:0.9rem 1.25rem; border:none; border-bottom:3px solid transparent; background:none; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:7px;">
+                        <i class="fas fa-layer-group" style="font-size:0.85rem;"></i>
+                        Application Health Check Dashboard
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB CONTENT
+═══════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="dashboardTabContent">
+
+    <!-- ── TAB 1: OVERALL STATUS ── -->
+    <div class="tab-pane fade show active" id="overallStatus" role="tabpanel">
+
+        <!-- KPI Cards -->
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-card" style="border-left:4px solid #AB1236; border-radius:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <p style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:#6c757d; margin-bottom:.4rem;">Total Towers</p>
+                            <h2 style="font-size:2.2rem; font-weight:700; color:#AB1236; margin:0;">{{ total_towers }}</h2>
+                        </div>
+                        <div style="width:44px; height:44px; background:#FEF2F2; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-layer-group" style="color:#AB1236; font-size:1.1rem;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-top:.5rem; margin-bottom:0;">Active monitoring groups</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card kpi-clickable" id="kpi-all" onclick="filterSummaryTable('all')"
+                     style="border-left:4px solid #3B82F6; border-radius:14px; cursor:pointer; transition:box-shadow .2s, transform .2s;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <p style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:#6c757d; margin-bottom:.4rem;">Total Applications</p>
+                            <h2 style="font-size:2.2rem; font-weight:700; color:#3B82F6; margin:0;">{{ total_reports }}</h2>
+                        </div>
+                        <div style="width:44px; height:44px; background:#EFF6FF; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-cubes" style="color:#3B82F6; font-size:1.1rem;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size:0.78rem; color:#3B82F6; margin-top:.5rem; margin-bottom:0; font-weight:600;">
+                        <i class="fas fa-arrow-down" style="font-size:0.7rem;"></i> Show all in summary
+                    </p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card kpi-clickable" id="kpi-healthy" onclick="filterSummaryTable('healthy')"
+                     style="border-left:4px solid #00C950; border-radius:14px; cursor:pointer; transition:box-shadow .2s, transform .2s;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <p style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:#6c757d; margin-bottom:.4rem;">Healthy</p>
+                            <h2 style="font-size:2.2rem; font-weight:700; color:#00C950; margin:0;">{{ healthy_reports }}</h2>
+                        </div>
+                        <div style="width:44px; height:44px; background:#F0FFF4; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-check-circle" style="color:#00C950; font-size:1.1rem;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size:0.78rem; color:#00C950; margin-top:.5rem; margin-bottom:0; font-weight:600;">
+                        {% if total_reports > 0 %}{{ "%.0f"|format(healthy_reports / total_reports * 100) }}%{% else %}0%{% endif %}
+                        &nbsp;<i class="fas fa-arrow-down" style="font-size:0.7rem;"></i> Filter healthy
+                    </p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card kpi-clickable" id="kpi-issues" onclick="filterSummaryTable('issues')"
+                     style="border-left:4px solid #E17100; border-radius:14px; cursor:pointer; transition:box-shadow .2s, transform .2s;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <p style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:#6c757d; margin-bottom:.4rem;">Issues</p>
+                            <h2 style="font-size:2.2rem; font-weight:700; color:#E17100; margin:0;">{{ warning_reports + failed_reports }}</h2>
+                        </div>
+                        <div style="width:44px; height:44px; background:#FFFBEB; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-exclamation-triangle" style="color:#E17100; font-size:1.1rem;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-top:.5rem; margin-bottom:0;">
+                        <span style="color:#FB2C36; font-weight:600;">{{ failed_reports }} critical</span>&nbsp;·&nbsp;<span style="color:#E17100; font-weight:600;">{{ warning_reports }} warnings</span>
+                        <br><span style="color:#E17100; font-weight:600;"><i class="fas fa-arrow-down" style="font-size:0.7rem;"></i> Filter issues</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Score Banner -->
+        {% if total_reports > 0 %}
+        {% set health_pct = (healthy_reports / total_reports * 100)|int %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="cards" style="background:white; border-radius:16px; padding:1.25rem 1.75rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            <div style="width:54px; height:54px; border-radius:50%; background:{% if health_pct >= 80 %}#F0FFF4{% elif health_pct >= 50 %}#FFFBEB{% else %}#FFF5F5{% endif %}; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700; color:{% if health_pct >= 80 %}#00C950{% elif health_pct >= 50 %}#E17100{% else %}#FB2C36{% endif %}; flex-shrink:0; border:2px solid {% if health_pct >= 80 %}#00C950{% elif health_pct >= 50 %}#E17100{% else %}#FB2C36{% endif %};">
+                                {{ health_pct }}%
+                            </div>
+                            <div>
+                                <p style="margin:0; font-weight:700; font-size:1rem; color:#1D293D;">Overall Platform Health Score</p>
+                                <p style="margin:0; font-size:0.8rem; color:#6c757d;">Based on last health check results across all towers</p>
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:200px; max-width:500px;">
+                            <div class="progress" style="height:12px; border-radius:8px;">
+                                <div class="progress-bar" style="width:{{ health_pct }}%; background:{% if health_pct >= 80 %}#00C950{% elif health_pct >= 50 %}#E17100{% else %}#FB2C36{% endif %}; border-radius:8px;" role="progressbar"></div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                                <small style="color:#6c757d; font-size:0.75rem;">0%</small>
+                                <small style="color:#6c757d; font-size:0.75rem;">100%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Charts Row 1: Donut + Sunburst -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-5">
+                <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
+                    <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
+                        <i class="fas fa-chart-pie" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Health Distribution
+                    </h6>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Overall status breakdown across all applications</p>
+                    <div id="donutChart" style="height:300px;"></div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
+                    <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
+                        <i class="fas fa-sitemap" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Tower &rarr; Application Hierarchy
+                    </h6>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Drill-down view of health status by tower and application</p>
+                    <div id="sunburstChart" style="height:300px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2: Stacked Bar + Health Score Bar -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-7">
+                <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
+                    <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
+                        <i class="fas fa-chart-bar" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Health Status by Tower
+                    </h6>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Stacked count of healthy / warning / failed per application tower</p>
+                    <div id="stackedBarChart" style="height:300px;"></div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
+                    <h6 style="font-family:'DM Sans',sans-serif; font-weight:700; color:#1D293D; margin-bottom:.25rem;">
+                        <i class="fas fa-tachometer-alt" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Avg. Health Score by Tower
+                    </h6>
+                    <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Average score (0–100) of all apps in each tower</p>
+                    <div id="scoreBarChart" style="height:300px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Status Table -->
+       <div class="row mb-4">
+            <div class="col-12">
+                <div class="cards" id="summaryTableSection" style="padding:0; border-radius:12px; border:none; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+                    <div class="card-headers" style="background: linear-gradient(135deg, #1D293D 0%, #475569 100%); justify-content:space-between; align-items:center; border-radius:12px; padding:1.25rem 1.5rem; position:relative; overflow:hidden; border:none;">
+					
+					<div style="position:absolute; top:-20px; right:15%; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
+                <div style="position:absolute; bottom:-40px; right:-20px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
+
+                <div style="position:relative; z-index:1;">
+                    <h1 class="mb-0 fw-bold" style="font-size:1.1rem; color:white; font-family:'DM Sans',sans-serif; letter-spacing:-0.2px;">
+                        <i class="fas fa-layer-group me-2" style="color:#F87171;"></i>Application Status Summary
+                    </h1>
+					<small style="color:rgba(255,255,255,0.7); font-size:0.78rem;">Last run results for all monitored applications</small>
+                </div>
+                        <div id="activeFilterBadge" style="display:none; align-items:center; gap:8px;">
+                            <span id="activeFilterLabel" style="font-size:0.82rem; font-weight:700; padding:4px 14px; border-radius:20px; background:rgba(255,255,255,0.2); color:white;"></span>
+                            <button onclick="filterSummaryTable('all')" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.5); color:white; border-radius:20px; font-size:0.75rem; font-weight:600; padding:4px 12px; cursor:pointer;">&#x2715; Clear filter</button>
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width:4%;">#</th>
+                                    <th style="width:22%;">Application</th>
+                                    <th style="width:18%;">Tower</th>
+                                    <th style="width:12%;">Status</th>
+                                    <th style="width:19%;">Health Score</th>
+                                    <th style="width:16%;">Last Run</th>
+                                    <th style="width:9%; text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryTableBody">
+                                {% set row_num = namespace(value=1) %}
+                                {% for tower in towers %}
+                                    {% for report in tower.reports %}
+                                    <tr class="summary-row" data-status="{{ report.last_run_status or 'not_run' }}">
+                                        <td style="color:#6c757d; font-size:0.85rem;">{{ row_num.value }}</td>
+                                        <td>
+                                            <span style="color:#1D293D; font-weight:600; font-size:0.9rem;">{{ report.application_name }}</span>
+                                            {% if report.description %}
+                                            <div style="font-size:0.75rem; color:#9CA3AF; margin-top:1px;">{{ report.description|truncate(45) }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span style="background:#F1F5F9; color:#1D293D; font-size:0.78rem; font-weight:500; padding:3px 10px; border-radius:20px;">{{ tower.name }}</span>
+                                        </td>
+                                        <td>
+                                            {% if report.last_run_status == 'healthy' %}
+                                                <span class="badge" style="background:#DCFCE7; color:#15803D; font-size:0.77rem; font-weight:600; border-radius:20px; padding:4px 10px;">
+                                                    <i class="fas fa-circle" style="font-size:0.5rem; vertical-align:middle; margin-right:3px;"></i> Healthy
+                                                </span>
+                                            {% elif report.last_run_status == 'warning' %}
+                                                <span class="badge" style="background:#FEF9C3; color:#92400E; font-size:0.77rem; font-weight:600; border-radius:20px; padding:4px 10px;">
+                                                    <i class="fas fa-circle" style="font-size:0.5rem; vertical-align:middle; margin-right:3px;"></i> Warning
+                                                </span>
+                                            {% elif report.last_run_status == 'failed' %}
+                                                <span class="badge" style="background:#FEE2E2; color:#B91C1C; font-size:0.77rem; font-weight:600; border-radius:20px; padding:4px 10px;">
+                                                    <i class="fas fa-circle" style="font-size:0.5rem; vertical-align:middle; margin-right:3px;"></i> Failed
+                                                </span>
+                                            {% else %}
+                                                <span class="badge" style="background:#F1F5F9; color:#6c757d; font-size:0.77rem; font-weight:600; border-radius:20px; padding:4px 10px;">
+                                                    <i class="far fa-circle" style="font-size:0.5rem; vertical-align:middle; margin-right:3px;"></i> Not Run
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if report.last_run_score is not none %}
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <div style="flex:1; background:#F1F5F9; border-radius:4px; height:8px; overflow:hidden;">
+                                                    <div style="width:{{ report.last_run_score|int }}%; height:100%; background:{% if report.last_run_score >= 80 %}#00C950{% elif report.last_run_score >= 50 %}#E17100{% else %}#FB2C36{% endif %}; border-radius:4px;"></div>
+                                                </div>
+                                                <span style="font-size:0.82rem; font-weight:600; color:#1D293D; min-width:36px;">{{ report.last_run_score|int }}%</span>
+                                            </div>
+                                            {% else %}
+                                            <span style="color:#9CA3AF; font-size:0.82rem;">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="font-size:0.82rem; color:#6c757d;">
+                                            {% if report.last_run_time %}
+                                                <i class="far fa-clock" style="color:#9CA3AF; margin-right:4px; font-size:0.75rem;"></i>
+                                                {{ report.last_run_time.strftime('%d %b %Y, %H:%M') }}
+                                            {% else %}
+                                                <span style="color:#9CA3AF;">Never</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <a href="{{ url_for('application_health_check.report_detail', report_id=report.id) }}"
+                                               title="Open report detail"
+                                               style="display:inline-flex; align-items:center; gap:4px; background:#AB1236; color:white !important; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:20px; text-decoration:none; white-space:nowrap; transition:background .15s;"
+                                               onmouseover="this.style.background='#8B0E2A'" onmouseout="this.style.background='#AB1236'">
+                                                <i class="fas fa-eye" style="font-size:0.7rem;"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% set row_num.value = row_num.value + 1 %}
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="fas fa-inbox" style="font-size:2rem; color:#D1D5DB; display:block; margin-bottom:.75rem;"></i>
+                                        <p style="color:#6c757d; margin:0;">No applications configured yet.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div id="summaryEmptyState" style="display:none; padding:2.5rem; text-align:center;">
+                            <i class="fas fa-filter" style="font-size:1.5rem; color:#D1D5DB; display:block; margin-bottom:.75rem;"></i>
+                            <p style="color:#6c757d; margin:0; font-size:0.95rem;">No applications match this filter.</p>
+                            <button onclick="filterSummaryTable('all')" style="margin-top:.75rem; background:#F1F5F9; border:none; color:#1D293D; font-weight:600; font-size:0.85rem; padding:6px 18px; border-radius:20px; cursor:pointer;">Clear filter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-pane overall -->
+
+
+    <!-- ── TAB 2: APPLICATION HEALTH CHECK DASHBOARD ── -->
+    <div class="tab-pane fade" id="towersDashboard" role="tabpanel">
+
+        <!-- Section header bar -->
+        <div class="row mb-4">
+            <div class="col-12">
+        <div class="cards" style="padding:0; border-radius:12px; border:none; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+
+            <div class="card-headers" style="background: linear-gradient(135deg, #1D293D 0%, #475569 100%); justify-content:space-between; align-items:center; border-radius:12px; padding:1.25rem 1.5rem; position:relative; overflow:hidden; border:none;">
+
+                <div style="position:absolute; top:-20px; right:15%; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
+                <div style="position:absolute; bottom:-40px; right:-20px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
+
+                <div style="position:relative; z-index:1;">
+                    <h1 class="mb-0 fw-bold" style="font-size:1.1rem; color:white; font-family:'DM Sans',sans-serif; letter-spacing:-0.2px;">
+                        <i class="fas fa-layer-group me-2" style="color:#F87171;"></i>Application Towers
+                    </h1>
+                    <small style="color:rgba(255,255,255,0.72); font-size:0.85rem; display:block; margin-top:4px;">
+                        {{ towers|length }} tower{% if towers|length != 1 %}s{% endif %} &middot; click a card to view details
+                    </small>
+                </div>
+
+                
+            </div>
+
+        </div>
+    </div>
+        </div>
+
+        <!-- Tower Cards Grid -->
+        <div class="row g-4">
+            {% for tower in towers %}
+            {% set total_apps    = tower.reports|length %}
+            {% set healthy_count = tower.reports|selectattr('last_run_status','equalto','healthy')|list|length %}
+            {% set warning_count = tower.reports|selectattr('last_run_status','equalto','warning')|list|length %}
+            {% set failed_count  = tower.reports|selectattr('last_run_status','equalto','failed')|list|length %}
+            {% set not_run_count = total_apps - healthy_count - warning_count - failed_count %}
+            {% set health_pct    = ((healthy_count / total_apps * 100)|int) if total_apps > 0 else 0 %}
+            {% set tower_status  = 'failed' if failed_count > 0 else ('warning' if warning_count > 0 else ('healthy' if healthy_count > 0 else 'not_run')) %}
+
+            <div class="col-md-6 col-xl-4">
+                <div style="background:white; border-radius:16px; border:1px solid #E2E8F0; overflow:hidden; height:100%; display:flex; flex-direction:column; transition:box-shadow .2s, transform .2s; box-shadow:0 1px 4px rgba(0,0,0,0.06);"
+                     onmouseover="this.style.boxShadow='0 8px 28px rgba(0,0,0,0.11)'; this.style.transform='translateY(-3px)'"
+                     onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; this.style.transform='translateY(0)'">
+
+                    <!-- Card top accent bar (status colour) -->
+                    <div style="height:4px; background:{% if tower_status == 'healthy' %}#00C950{% elif tower_status == 'warning' %}#E17100{% elif tower_status == 'failed' %}#FB2C36{% else %}#CBD5E1{% endif %};"></div>
+
+                    <!-- Card header -->
+                    <div style="padding:1.25rem 1.25rem 0.75rem; display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem;">
+                        <div style="display:flex; align-items:center; gap:0.75rem; min-width:0;">
+                            <!-- Tower icon -->
+                            <div style="width:42px; height:42px; border-radius:10px; background:{% if tower_status == 'healthy' %}#F0FFF4{% elif tower_status == 'warning' %}#FFFBEB{% elif tower_status == 'failed' %}#FFF5F5{% else %}#F1F5F9{% endif %}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fas fa-building" style="color:{% if tower_status == 'healthy' %}#00C950{% elif tower_status == 'warning' %}#E17100{% elif tower_status == 'failed' %}#FB2C36{% else %}#94A3B8{% endif %}; font-size:1.05rem;"></i>
+                            </div>
+                            <div style="min-width:0;">
+                                <h3 style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:0.97rem; color:#1D293D; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ tower.name }}</h3>
+                                <p style="font-size:0.78rem; color:#9CA3AF; margin:2px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">{{ tower.description or 'No description' }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Admin action buttons -->
+                        {% if user.role == 'admin' %}
+                        <div style="display:flex; gap:4px; flex-shrink:0;">
+                            <a href="{{ url_for('application_health_check.edit_tower', tower_id=tower.id) }}"
+                               title="Edit Tower"
+                               style="width:30px; height:30px; border-radius:7px; background:#F1F5F9; border:1px solid #E2E8F0; display:inline-flex; align-items:center; justify-content:center; color:#475569; text-decoration:none; transition:all .15s;"
+                               onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+                                <i class="fas fa-edit" style="font-size:0.72rem;"></i>
+                            </a>
+                            <a href="{{ url_for('application_health_check.manage_tower_members', tower_id=tower.id) }}"
+                               title="Manage Members"
+                               style="width:30px; height:30px; border-radius:7px; background:#F1F5F9; border:1px solid #E2E8F0; display:inline-flex; align-items:center; justify-content:center; color:#475569; text-decoration:none; transition:all .15s;"
+                               onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+                                <i class="fas fa-users" style="font-size:0.72rem;"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('application_health_check.delete_tower', tower_id=tower.id) }}" style="display:inline;" onsubmit="return confirm('Delete tower {{ tower.name }}?')">
+                                <button type="submit" title="Delete Tower"
+                                        style="width:30px; height:30px; border-radius:7px; background:#FFF5F5; border:1px solid #FEE2E2; display:inline-flex; align-items:center; justify-content:center; color:#E11D48; cursor:pointer; transition:all .15s;"
+                                        onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FFF5F5'">
+                                    <i class="fas fa-trash" style="font-size:0.72rem;"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Health progress bar -->
+                    <div style="padding:0 1.25rem 1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <span style="font-size:0.74rem; font-weight:600; color:#6c757d; text-transform:uppercase; letter-spacing:.5px;">Health Score</span>
+                            <span style="font-size:0.82rem; font-weight:700; color:{% if health_pct >= 80 %}#00C950{% elif health_pct >= 50 %}#E17100{% else %}#FB2C36{% endif %};">{{ health_pct }}%</span>
+                        </div>
+                        <div style="height:6px; background:#F1F5F9; border-radius:4px; overflow:hidden;">
+                            <div style="height:100%; width:{{ health_pct }}%; background:{% if health_pct >= 80 %}#00C950{% elif health_pct >= 50 %}#E17100{% elif health_pct > 0 %}#FB2C36{% else %}#CBD5E1{% endif %}; border-radius:4px; transition:width .6s ease;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Status counts row -->
+                    <div style="padding:0 1.25rem 1rem; display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
+                        <!-- Total -->
+                        <div style="background:#F8FAFC; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #E2E8F0;">
+                            <div style="font-size:1.3rem; font-weight:700; color:#1D293D; line-height:1;">{{ total_apps }}</div>
+                            <div style="font-size:0.68rem; color:#94A3B8; margin-top:3px; font-weight:500;">Total</div>
+                        </div>
+                        <!-- Healthy -->
+                        <div style="background:#F0FFF4; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #BBF7D0;">
+                            <div style="font-size:1.3rem; font-weight:700; color:#00C950; line-height:1;">{{ healthy_count }}</div>
+                            <div style="font-size:0.68rem; color:#00C950; margin-top:3px; font-weight:500;">Healthy</div>
+                        </div>
+                        <!-- Warning -->
+                        <div style="background:#FFFBEB; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #FDE68A;">
+                            <div style="font-size:1.3rem; font-weight:700; color:#E17100; line-height:1;">{{ warning_count }}</div>
+                            <div style="font-size:0.68rem; color:#E17100; margin-top:3px; font-weight:500;">Warning</div>
+                        </div>
+                        <!-- Failed -->
+                        <div style="background:#FFF5F5; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #FECACA;">
+                            <div style="font-size:1.3rem; font-weight:700; color:#FB2C36; line-height:1;">{{ failed_count }}</div>
+                            <div style="font-size:0.68rem; color:#FB2C36; margin-top:3px; font-weight:500;">Failed</div>
+                        </div>
+                    </div>
+
+                    <!-- App mini-list (up to 4 most recent) -->
+                    {% if tower.reports %}
+                    <div style="padding:0 1.25rem 0.75rem; flex:1;">
+                        <div style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:#94A3B8; margin-bottom:6px;">Applications</div>
+                        {% for report in tower.reports[:4] %}
+                        {% set s = report.last_run_status or 'not_run' %}
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid #F8FAFC;">
+                            <div style="display:flex; align-items:center; gap:7px; min-width:0;">
+                                <span style="width:7px; height:7px; border-radius:50%; flex-shrink:0; background:{% if s=='healthy' %}#00C950{% elif s=='warning' %}#E17100{% elif s=='failed' %}#FB2C36{% else %}#CBD5E1{% endif %};"></span>
+                                <span style="font-size:0.82rem; color:#1D293D; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;">{{ report.application_name }}</span>
+                            </div>
+                            {% if report.last_run_score is not none %}
+                            <span style="font-size:0.75rem; font-weight:600; color:{% if report.last_run_score >= 80 %}#00C950{% elif report.last_run_score >= 50 %}#E17100{% else %}#FB2C36{% endif %}; flex-shrink:0; margin-left:8px;">{{ report.last_run_score|int }}%</span>
+                            {% else %}
+                            <span style="font-size:0.75rem; color:#CBD5E1; flex-shrink:0; margin-left:8px;">—</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        {% if total_apps > 4 %}
+                        <div style="font-size:0.75rem; color:#94A3B8; padding-top:5px; text-align:center;">
+                            +{{ total_apps - 4 }} more application{% if (total_apps - 4) != 1 %}s{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Card footer actions -->
+                    <div style="padding:0.85rem 1.25rem; background:#F8FAFC; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+                        <a href="{{ url_for('application_health_check.tower_detail', tower_id=tower.id) }}"
+                           style="display:inline-flex; align-items:center; gap:6px; background:#AB1236; color:white; border-radius:8px; padding:6px 14px; font-size:0.82rem; font-weight:600; text-decoration:none; transition:background .15s; font-family:'DM Sans',sans-serif;"
+                           onmouseover="this.style.background='#8B0E2A'" onmouseout="this.style.background='#AB1236'">
+                            <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i> View Details
+                        </a>
+                        {% if user.role == 'admin' or tower.id in user_member_of_towers %}
+                        <a href="{{ url_for('application_health_check.create_report', tower_id=tower.id) }}"
+                           style="display:inline-flex; align-items:center; gap:5px; background:white; color:#1D293D; border:1px solid #E2E8F0; border-radius:8px; padding:6px 12px; font-size:0.82rem; font-weight:600; text-decoration:none; transition:all .15s; font-family:'DM Sans',sans-serif;"
+                           onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='white'">
+                            <i class="fas fa-plus" style="font-size:0.7rem; color:#AB1236;"></i> Add App
+                        </a>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="cards">
+                    <div style="text-align:center; padding:3.5rem 1rem;">
+                        <div style="width:72px; height:72px; background:#F1F5F9; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+                            <i class="fas fa-layer-group" style="font-size:1.8rem; color:#9CA3AF;"></i>
+                        </div>
+                        <h4 style="color:#6c757d; font-weight:600; margin-bottom:.5rem;">No Application Towers Found</h4>
+                        <p style="color:#9CA3AF; font-size:0.9rem; margin-bottom:1.5rem;">Create your first tower to start monitoring application health.</p>
+                        {% if user.role == 'admin' %}
+                        <a href="{{ url_for('application_health_check.create_tower') }}" class="btn btn-npg-red">
+                            <i class="fas fa-plus me-2"></i>Create First Tower
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div><!-- /tab-pane towers -->
+
+</div><!-- /tab-content -->
+
+<style>
+    #dashboardTabs .nav-link.active {
+        color: #AB1236 !important;
+        border-bottom: 3px solid #AB1236 !important;
+    }
+    #dashboardTabs .nav-link:hover:not(.active) {
+        color: #1D293D !important;
+        border-bottom: 3px solid #E2E8F0 !important;
+    }
+    .tab-pane { animation: fadeIn .3s ease; }
+    .kpi-clickable:hover {
+        box-shadow: 0 6px 24px rgba(0,0,0,0.12) !important;
+        transform: translateY(-3px) !important;
+    }
+    .kpi-clickable.kpi-active {
+        box-shadow: 0 0 0 3px #AB1236 inset !important;
+        transform: translateY(-2px) !important;
+    }
+</style>
+
+<script>
+/* ── KPI Filter ── */
+let currentFilter = 'all';
+
+function filterSummaryTable(filter) {
+    currentFilter = filter;
+
+    document.querySelectorAll('.kpi-clickable').forEach(c => c.classList.remove('kpi-active'));
+    if (filter === 'all')     { const el = document.getElementById('kpi-all');     if (el) el.classList.add('kpi-active'); }
+    if (filter === 'healthy') { const el = document.getElementById('kpi-healthy'); if (el) el.classList.add('kpi-active'); }
+    if (filter === 'issues')  { const el = document.getElementById('kpi-issues');  if (el) el.classList.add('kpi-active'); }
+
+    const rows  = document.querySelectorAll('.summary-row');
+    const badge = document.getElementById('activeFilterBadge');
+    const label = document.getElementById('activeFilterLabel');
+    const empty = document.getElementById('summaryEmptyState');
+    const tbody = document.getElementById('summaryTableBody');
+
+    let visibleCount = 0;
+    rows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        let show = false;
+        if (filter === 'all')     show = true;
+        if (filter === 'healthy') show = (status === 'healthy');
+        if (filter === 'issues')  show = (status === 'warning' || status === 'failed');
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+    });
+
+    if (filter === 'all') {
+        badge.style.display = 'none';
+    } else {
+        badge.style.display = 'flex';
+        const labelMap = { healthy: '&#x25CF; Healthy Apps', issues: '&#x26A0; Issues (Warning + Failed)' };
+        label.innerHTML = labelMap[filter] || filter;
+    }
+
+    if (empty) empty.style.display = (visibleCount === 0 && rows.length > 0) ? 'block' : 'none';
+    if (tbody) tbody.style.display = visibleCount === 0 ? 'none' : '';
+
+    const section = document.getElementById('summaryTableSection');
+    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Data injected from Jinja ── */
+const overallData = {
+    healthy: {{ healthy_reports }},
+    warning: {{ warning_reports }},
+    failed:  {{ failed_reports }},
+    notRun:  {{ total_reports - healthy_reports - warning_reports - failed_reports }}
+};
+
+const towerData = [
+    {% for tower in towers %}
+    {
+        name: {{ tower.name | tojson }},
+        healthy: {{ tower.reports | selectattr('last_run_status','equalto','healthy') | list | length }},
+        warning: {{ tower.reports | selectattr('last_run_status','equalto','warning') | list | length }},
+        failed:  {{ tower.reports | selectattr('last_run_status','equalto','failed')  | list | length }},
+        total:   {{ tower.reports | length }},
+        apps: [
+            {% for report in tower.reports %}
+            {
+                name:   {{ report.application_name | tojson }},
+                status: {{ (report.last_run_status or 'not_run') | tojson }},
+                score:  {{ report.last_run_score if report.last_run_score is not none else 0 }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+
+const COLORS = {
+    healthy: '#00C950',
+    warning: '#E17100',
+    failed:  '#FB2C36',
+    not_run: '#CBD5E1',
+    brand:   '#AB1236'
+};
+
+const LAYOUT_BASE = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor:  'rgba(0,0,0,0)',
+    margin: { t: 10, r: 10, b: 30, l: 10 },
+    font:   { family: "'DM Sans', sans-serif", color: '#1D293D', size: 12 },
+    showlegend: true,
+    legend: { orientation: 'h', y: -0.15, font: { size: 11 } }
+};
+
+const CONFIG = { displayModeBar: false, responsive: true };
+
+/* ── 1. Donut Chart ── */
+(function buildDonut() {
+    const labels = ['Healthy', 'Warning', 'Failed', 'Not Run'];
+    const values = [overallData.healthy, overallData.warning, overallData.failed, overallData.notRun];
+    const colors = [COLORS.healthy, COLORS.warning, COLORS.failed, COLORS.not_run];
+
+    const trace = {
+        type: 'pie', hole: 0.58,
+        labels, values,
+        marker: { colors, line: { color: '#fff', width: 2 } },
+        textinfo: 'percent',
+        textfont: { size: 12, color: '#fff', family: "'DM Sans',sans-serif" },
+        hovertemplate: '<b>%{label}</b><br>Count: %{value}<br>%{percent}<extra></extra>',
+        sort: false
+    };
+
+    const totalApps = values.reduce((a, b) => a + b, 0);
+    const layout = {
+        ...LAYOUT_BASE,
+        margin: { t: 20, r: 10, b: 40, l: 10 },
+        annotations: [{
+            text: `<b>${totalApps}</b><br><span style="font-size:11px;color:#6c757d">Total Apps</span>`,
+            x: 0.5, y: 0.5, showarrow: false, align: 'center',
+            font: { size: 16, family: "'DM Sans',sans-serif", color: '#1D293D' }
+        }]
+    };
+
+    Plotly.newPlot('donutChart', [trace], layout, CONFIG);
+})();
+
+/* ── 2. Sunburst ── */
+(function buildSunburst() {
+    if (towerData.length === 0) return;
+
+    const ids = [], labels = [], parents = [], values = [], colors = [], hoverTexts = [];
+
+    const totalApps = towerData.reduce((sum, t) => sum + (t.apps.length || 1), 0);
+    ids.push('root'); labels.push('All Apps'); parents.push(''); values.push(totalApps);
+    colors.push('#AB1236');
+    hoverTexts.push(`Platform Overview<br>Total Apps: ${towerData.reduce((s, t) => s + t.total, 0)}`);
+
+    towerData.forEach((tower, tIdx) => {
+        const towerId = `t${tIdx}`;
+        const appList = tower.apps.length > 0 ? tower.apps : [{ name: '(no apps)', status: 'not_run', score: 0 }];
+        const towerVal = appList.length;
+
+        ids.push(towerId); labels.push(tower.name); parents.push('root');
+        values.push(towerVal); colors.push('#334155');
+        hoverTexts.push(`<b>${tower.name}</b><br>Total: ${tower.total} | ✔ ${tower.healthy} ⚠ ${tower.warning} ✖ ${tower.failed}`);
+
+        appList.forEach((app, aIdx) => {
+            ids.push(`${towerId}_a${aIdx}`);
+            labels.push(app.name);
+            parents.push(towerId);
+            values.push(1);
+            colors.push(COLORS[app.status] || COLORS.not_run);
+            hoverTexts.push(`<b>${app.name}</b><br>Status: ${app.status.replace('_', ' ')}<br>${app.score > 0 ? 'Score: ' + app.score + '%' : 'Not yet run'}`);
+        });
+    });
+
+    const trace = {
+        type: 'sunburst', ids, labels, parents, values, branchvalues: 'total',
+        marker: { colors, line: { color: '#ffffff', width: 2 } },
+        hovertext: hoverTexts, hovertemplate: '%{hovertext}<extra></extra>',
+        textfont: { family: "'DM Sans',sans-serif", size: 11, color: '#fff' },
+        insidetextorientation: 'tangential', leaf: { opacity: 0.92 }, maxdepth: 3
+    };
+
+    Plotly.newPlot('sunburstChart', [trace], { ...LAYOUT_BASE, margin: { t: 10, r: 10, b: 10, l: 10 }, showlegend: false }, CONFIG);
+})();
+
+/* ── 3. Stacked Bar ── */
+(function buildStackedBar() {
+    if (towerData.length === 0) return;
+
+    const names   = towerData.map(t => t.name);
+    const healthy = towerData.map(t => t.healthy);
+    const warning = towerData.map(t => t.warning);
+    const failed  = towerData.map(t => t.failed);
+    const notRun  = towerData.map(t => t.total - t.healthy - t.warning - t.failed);
+
+    const barOpts = { type: 'bar', orientation: 'v', barmode: 'stack' };
+    const traces = [
+        { ...barOpts, name: 'Healthy', x: names, y: healthy, marker: { color: COLORS.healthy, line: { color: '#fff', width: 1 } } },
+        { ...barOpts, name: 'Warning', x: names, y: warning, marker: { color: COLORS.warning, line: { color: '#fff', width: 1 } } },
+        { ...barOpts, name: 'Failed',  x: names, y: failed,  marker: { color: COLORS.failed,  line: { color: '#fff', width: 1 } } },
+        { ...barOpts, name: 'Not Run', x: names, y: notRun,  marker: { color: COLORS.not_run, line: { color: '#fff', width: 1 } } }
+    ];
+
+    const layout = {
+        ...LAYOUT_BASE, barmode: 'stack',
+        margin: { t: 10, r: 10, b: 60, l: 30 },
+        xaxis: { tickfont: { family: "'DM Sans',sans-serif", size: 11 }, tickangle: -20 },
+        yaxis: { title: 'App Count', tickfont: { family: "'DM Sans',sans-serif", size: 11 }, gridcolor: '#F1F5F9', gridwidth: 1 },
+        legend: { orientation: 'h', y: -0.35, font: { size: 11 } }
+    };
+
+    Plotly.newPlot('stackedBarChart', traces, layout, CONFIG);
+})();
+
+/* ── 4. Avg Health Score Bar ── */
+(function buildScoreBar() {
+    if (towerData.length === 0) return;
+
+    const names = [], scores = [], barColors = [];
+    towerData.forEach(tower => {
+        const scored = tower.apps.filter(a => a.score > 0);
+        const avg = scored.length ? Math.round(scored.reduce((s, a) => s + a.score, 0) / scored.length) : 0;
+        names.push(tower.name);
+        scores.push(avg);
+        barColors.push(avg >= 80 ? COLORS.healthy : avg >= 50 ? COLORS.warning : COLORS.failed);
+    });
+
+    const trace = {
+        type: 'bar', x: scores, y: names, orientation: 'h',
+        text: scores.map(s => `${s}%`), textposition: 'outside',
+        textfont: { family: "'DM Sans',sans-serif", size: 12, color: '#1D293D' },
+        marker: { color: barColors, line: { color: '#fff', width: 1 }, cornerradius: 4 },
+        hovertemplate: '<b>%{y}</b><br>Avg Score: %{x}%<extra></extra>'
+    };
+
+    const layout = {
+        ...LAYOUT_BASE, showlegend: false,
+        margin: { t: 10, r: 60, b: 30, l: 10 },
+        xaxis: { range: [0, 115], ticksuffix: '%', tickfont: { family: "'DM Sans',sans-serif", size: 11 }, gridcolor: '#F1F5F9', gridwidth: 1, zeroline: false },
+        yaxis: { automargin: true, tickfont: { family: "'DM Sans',sans-serif", size: 11 } }
+    };
+
+    Plotly.newPlot('scoreBarChart', [trace], layout, CONFIG);
+})();
+
+/* ── Tab active styling ── */
+document.querySelectorAll('#dashboardTabs .nav-link').forEach(link => {
+    link.addEventListener('click', function () {
+        document.querySelectorAll('#dashboardTabs .nav-link').forEach(l => {
+            l.style.color = '#6c757d';
+            l.style.borderBottom = '3px solid transparent';
+        });
+        this.style.color = '#AB1236';
+        this.style.borderBottom = '3px solid #AB1236';
+        setTimeout(() => {
+            ['donutChart','sunburstChart','stackedBarChart','scoreBarChart'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.data) Plotly.relayout(id, { autosize: true });
+            });
+        }, 150);
+    });
+});
+</script>
+
+{% endblock %}
