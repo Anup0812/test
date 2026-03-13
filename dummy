@@ -4,11 +4,7 @@
 
 {% block content %}
 
-<!-- Plotly.js CDN -->
 <script src="{{ url_for('static', filename='js/plotly-3.3.0.min.js') }}"></script>
-<!-- ═══════════════════════════════════════════════════════════
-     BREADCRUMB
-═══════════════════════════════════════════════════════════ -->
 <div class="row mb-3">
     <div class="col-12">
         <div class="card rounded pt-2 ps-3" style="height:42px; border-radius:12px !important; border:1px solid #E2E8F0;">
@@ -24,19 +20,14 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     HERO HEADER
-═══════════════════════════════════════════════════════════ -->
 <div class="row mb-4">
     <div class="col-12">
         <div style="background: linear-gradient(135deg, #1D293D 0%, #AB1236 100%); border-radius:16px; padding:2rem 2rem 1.75rem; position:relative; overflow:hidden;">
-            <!-- Background texture -->
             <div style="position:absolute; top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.04); pointer-event:none"></div>
             <div style="position:absolute; bottom:-30px; right:120px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.04); pointer-event:none"></div>
 
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3" style="position:relative;z-index:1;">
                 <div class="d-flex align-items-center gap-3">
-                    <!-- Icon pill -->
                     <div style="width:52px; height:52px; background:rgba(255,255,255,0.15); border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(255,255,255,0.2);">
                         <i class="fas fa-heartbeat" style="font-size:1.4rem; color:white;"></i>
                     </div>
@@ -52,11 +43,10 @@
                         <i class="fas fa-plus" style="font-size:0.75rem;"></i> Create Tower
                     </a>
                     {% endif %}
-                    
+
                 </div>
             </div>
 
-            <!-- Quick KPI strip inside hero -->
             <div class="d-flex gap-4 mt-3 flex-wrap" style="border-top:1px solid rgba(255,255,255,0.12); padding-top:1rem;">
                 <div style="color:rgba(255,255,255,0.9);">
                     <span style="font-size:1.4rem; font-weight:700;">{{ total_towers }}</span>
@@ -87,9 +77,6 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     TAB NAVIGATION
-═══════════════════════════════════════════════════════════ -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="cards" style="border-radius:12px; overflow:hidden; padding:0;">
@@ -113,15 +100,10 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     TAB CONTENT
-═══════════════════════════════════════════════════════════ -->
 <div class="tab-content" id="dashboardTabContent">
 
-    <!-- ── TAB 1: OVERALL STATUS ── -->
     <div class="tab-pane fade show active" id="overallStatus" role="tabpanel">
 
-        <!-- KPI Cards -->
         <div class="row mb-4 g-3">
             <div class="col-6 col-md-3">
                 <div class="stat-card" style="border-left:4px solid #AB1236; border-radius:14px;">
@@ -192,7 +174,6 @@
             </div>
         </div>
 
-        <!-- Health Score Banner -->
         {% if total_reports > 0 %}
         {% set health_pct = (healthy_reports / total_reports * 100)|int %}
         <div class="row mb-4">
@@ -223,7 +204,6 @@
         </div>
         {% endif %}
 
-        <!-- Charts Row 1: Donut + Sunburst -->
         <div class="row mb-4 g-3">
             <div class="col-md-5">
                 <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
@@ -240,12 +220,11 @@
                         <i class="fas fa-sitemap" style="color:#AB1236; margin-right:6px; font-size:0.9rem;"></i>Tower &rarr; Application Hierarchy
                     </h6>
                     <p style="font-size:0.78rem; color:#6c757d; margin-bottom:1rem;">Drill-down view of health status by tower and application</p>
-                    <div id="sunburstChart" style="height:300px;"></div>
+                    <div id="sunburstChart" style="height:460px; min-height:400px;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Charts Row 2: Stacked Bar + Health Score Bar -->
         <div class="row mb-4 g-3">
             <div class="col-md-7">
                 <div class="cards" style="background:white; border-radius:16px; padding:1.5rem; height:100%;">
@@ -267,12 +246,11 @@
             </div>
         </div>
 
-        <!-- Application Status Table -->
-       <div class="row mb-4">
+        <div class="row mb-4">
             <div class="col-12">
                 <div class="cards" id="summaryTableSection" style="padding:0; border-radius:12px; border:none; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                     <div class="card-headers" style="background: linear-gradient(135deg, #1D293D 0%, #475569 100%); justify-content:space-between; align-items:center; border-radius:12px; padding:1.25rem 1.5rem; position:relative; overflow:hidden; border:none;">
-					
+
 					<div style="position:absolute; top:-20px; right:15%; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
                 <div style="position:absolute; bottom:-40px; right:-20px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
 
@@ -282,22 +260,22 @@
                     </h1>
 					<small style="color:rgba(255,255,255,0.7); font-size:0.78rem;">Last run results for all monitored applications</small>
                 </div>
-                        <div id="activeFilterBadge" style="display:none; align-items:center; gap:8px;">
+                        <div id="activeFilterBadge" style="display:none; flex-direction:row; align-items:center; gap:8px; position:relative; z-index:2;">
                             <span id="activeFilterLabel" style="font-size:0.82rem; font-weight:700; padding:4px 14px; border-radius:20px; background:rgba(255,255,255,0.2); color:white;"></span>
-                            <button onclick="filterSummaryTable('all')" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.5); color:white; border-radius:20px; font-size:0.75rem; font-weight:600; padding:4px 12px; cursor:pointer;">&#x2715; Clear filter</button>
+                            <button type="button" onclick="filterSummaryTable('all'); return false;" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.5); color:white; border-radius:20px; font-size:0.75rem; font-weight:600; padding:4px 12px; cursor:pointer; line-height:1.4;">&#x2715; Clear filter</button>
                         </div>
                     </div>
                     <div style="overflow-x:auto;">
                         <table class="table mb-0">
-                            <thead>
+                            <thead style="background: linear-gradient(135deg, #1D293D 0%, #2E3F57 100%);">
                                 <tr>
-                                    <th style="width:4%;">#</th>
-                                    <th style="width:22%;">Application</th>
-                                    <th style="width:18%;">Tower</th>
-                                    <th style="width:12%;">Status</th>
-                                    <th style="width:19%;">Health Score</th>
-                                    <th style="width:16%;">Last Run</th>
-                                    <th style="width:9%; text-align:center;">Action</th>
+                                    <th style="width:4%; color:#CBD5E1; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:11px 12px; border:none;">#</th>
+                                    <th style="width:22%; color:#CBD5E1; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:11px 12px; border:none;">Application</th>
+                                    <th style="width:18%; color:#CBD5E1; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:11px 12px; border:none;">Tower</th>
+                                    <th style="width:12%; color:#CBD5E1; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:11px 12px; border:none;">Status</th>
+                                    <th style="width:19%; color:#CBD5E1; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:11px 12px; border:none;">Health Score</th>
+                                    <th style="width:16%; color:#CBD5E1; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:11px 12px; border:none;">Last Run</th>
+                                    <th style="width:9%; text-align:center; color:#CBD5E1; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:11px 12px; border:none;">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="summaryTableBody">
@@ -385,13 +363,8 @@
             </div>
         </div>
 
-    </div><!-- /tab-pane overall -->
+    </div><div class="tab-pane fade" id="towersDashboard" role="tabpanel">
 
-
-    <!-- ── TAB 2: APPLICATION HEALTH CHECK DASHBOARD ── -->
-    <div class="tab-pane fade" id="towersDashboard" role="tabpanel">
-
-        <!-- Section header bar -->
         <div class="row mb-4">
             <div class="col-12">
         <div class="cards" style="padding:0; border-radius:12px; border:none; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
@@ -410,14 +383,13 @@
                     </small>
                 </div>
 
-                
+
             </div>
 
         </div>
     </div>
         </div>
 
-        <!-- Tower Cards Grid -->
         <div class="row g-4">
             {% for tower in towers %}
             {% set total_apps    = tower.reports|length %}
@@ -433,13 +405,10 @@
                      onmouseover="this.style.boxShadow='0 8px 28px rgba(0,0,0,0.11)'; this.style.transform='translateY(-3px)'"
                      onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; this.style.transform='translateY(0)'">
 
-                    <!-- Card top accent bar (status colour) -->
                     <div style="height:4px; background:{% if tower_status == 'healthy' %}#00C950{% elif tower_status == 'warning' %}#E17100{% elif tower_status == 'failed' %}#FB2C36{% else %}#CBD5E1{% endif %};"></div>
 
-                    <!-- Card header -->
                     <div style="padding:1.25rem 1.25rem 0.75rem; display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem;">
                         <div style="display:flex; align-items:center; gap:0.75rem; min-width:0;">
-                            <!-- Tower icon -->
                             <div style="width:42px; height:42px; border-radius:10px; background:{% if tower_status == 'healthy' %}#F0FFF4{% elif tower_status == 'warning' %}#FFFBEB{% elif tower_status == 'failed' %}#FFF5F5{% else %}#F1F5F9{% endif %}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                                 <i class="fas fa-building" style="color:{% if tower_status == 'healthy' %}#00C950{% elif tower_status == 'warning' %}#E17100{% elif tower_status == 'failed' %}#FB2C36{% else %}#94A3B8{% endif %}; font-size:1.05rem;"></i>
                             </div>
@@ -449,7 +418,6 @@
                             </div>
                         </div>
 
-                        <!-- Admin action buttons -->
                         {% if user.role == 'admin' %}
                         <div style="display:flex; gap:4px; flex-shrink:0;">
                             <a href="{{ url_for('application_health_check.edit_tower', tower_id=tower.id) }}"
@@ -475,7 +443,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Health progress bar -->
                     <div style="padding:0 1.25rem 1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                             <span style="font-size:0.74rem; font-weight:600; color:#6c757d; text-transform:uppercase; letter-spacing:.5px;">Health Score</span>
@@ -486,31 +453,25 @@
                         </div>
                     </div>
 
-                    <!-- Status counts row -->
                     <div style="padding:0 1.25rem 1rem; display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
-                        <!-- Total -->
                         <div style="background:#F8FAFC; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #E2E8F0;">
                             <div style="font-size:1.3rem; font-weight:700; color:#1D293D; line-height:1;">{{ total_apps }}</div>
                             <div style="font-size:0.68rem; color:#94A3B8; margin-top:3px; font-weight:500;">Total</div>
                         </div>
-                        <!-- Healthy -->
                         <div style="background:#F0FFF4; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #BBF7D0;">
                             <div style="font-size:1.3rem; font-weight:700; color:#00C950; line-height:1;">{{ healthy_count }}</div>
                             <div style="font-size:0.68rem; color:#00C950; margin-top:3px; font-weight:500;">Healthy</div>
                         </div>
-                        <!-- Warning -->
                         <div style="background:#FFFBEB; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #FDE68A;">
                             <div style="font-size:1.3rem; font-weight:700; color:#E17100; line-height:1;">{{ warning_count }}</div>
                             <div style="font-size:0.68rem; color:#E17100; margin-top:3px; font-weight:500;">Warning</div>
                         </div>
-                        <!-- Failed -->
                         <div style="background:#FFF5F5; border-radius:10px; padding:0.6rem 0.5rem; text-align:center; border:1px solid #FECACA;">
                             <div style="font-size:1.3rem; font-weight:700; color:#FB2C36; line-height:1;">{{ failed_count }}</div>
                             <div style="font-size:0.68rem; color:#FB2C36; margin-top:3px; font-weight:500;">Failed</div>
                         </div>
                     </div>
 
-                    <!-- App mini-list (up to 4 most recent) -->
                     {% if tower.reports %}
                     <div style="padding:0 1.25rem 0.75rem; flex:1;">
                         <div style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:#94A3B8; margin-bottom:6px;">Applications</div>
@@ -536,7 +497,6 @@
                     </div>
                     {% endif %}
 
-                    <!-- Card footer actions -->
                     <div style="padding:0.85rem 1.25rem; background:#F8FAFC; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
                         <a href="{{ url_for('application_health_check.tower_detail', tower_id=tower.id) }}"
                            style="display:inline-flex; align-items:center; gap:6px; background:#AB1236; color:white; border-radius:8px; padding:6px 14px; font-size:0.82rem; font-weight:600; text-decoration:none; transition:background .15s; font-family:'DM Sans',sans-serif;"
@@ -574,11 +534,7 @@
             {% endfor %}
         </div>
 
-    </div><!-- /tab-pane towers -->
-
-</div><!-- /tab-content -->
-
-<style>
+    </div></div><style>
     #dashboardTabs .nav-link.active {
         color: #AB1236 !important;
         border-bottom: 3px solid #AB1236 !important;
@@ -593,8 +549,9 @@
         transform: translateY(-3px) !important;
     }
     .kpi-clickable.kpi-active {
-        box-shadow: 0 0 0 3px #AB1236 inset !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.10) !important;
         transform: translateY(-2px) !important;
+        background-color: #FAFBFF !important;
     }
 </style>
 
@@ -605,8 +562,9 @@ let currentFilter = 'all';
 function filterSummaryTable(filter) {
     currentFilter = filter;
 
+    // Remove active state from all KPI cards
     document.querySelectorAll('.kpi-clickable').forEach(c => c.classList.remove('kpi-active'));
-    if (filter === 'all')     { const el = document.getElementById('kpi-all');     if (el) el.classList.add('kpi-active'); }
+    // Only highlight filtered-state cards (not 'all' — that is the reset/neutral state)
     if (filter === 'healthy') { const el = document.getElementById('kpi-healthy'); if (el) el.classList.add('kpi-active'); }
     if (filter === 'issues')  { const el = document.getElementById('kpi-issues');  if (el) el.classList.add('kpi-active'); }
 
@@ -720,45 +678,85 @@ const CONFIG = { displayModeBar: false, responsive: true };
     Plotly.newPlot('donutChart', [trace], layout, CONFIG);
 })();
 
-/* ── 2. Sunburst ── */
+/* ── 2. Sunburst (Eve-style Default Palette mapped to towerData) ── */
 (function buildSunburst() {
-    if (towerData.length === 0) return;
+    if (!towerData || towerData.length === 0) return;
 
-    const ids = [], labels = [], parents = [], values = [], colors = [], hoverTexts = [];
+    const ids = [];
+    const labels = [];
+    const parents = [];
+    const values = [];
+    const customdata = [];
 
-    const totalApps = towerData.reduce((sum, t) => sum + (t.apps.length || 1), 0);
-    ids.push('root'); labels.push('All Apps'); parents.push(''); values.push(totalApps);
-    colors.push('#AB1236');
-    hoverTexts.push(`Platform Overview<br>Total Apps: ${towerData.reduce((s, t) => s + t.total, 0)}`);
+    // 1. Root Node (Center)
+    ids.push("root");
+    labels.push("Platform");
+    parents.push("");
+    values.push(0); // Will be calculated below
+    customdata.push("<b>Platform Overview</b>");
 
+    let totalApps = 0;
+
+    // 2. Towers (Inner Ring)
     towerData.forEach((tower, tIdx) => {
-        const towerId = `t${tIdx}`;
-        const appList = tower.apps.length > 0 ? tower.apps : [{ name: '(no apps)', status: 'not_run', score: 0 }];
-        const towerVal = appList.length;
+        const towerId = `tower_${tIdx}`;
 
-        ids.push(towerId); labels.push(tower.name); parents.push('root');
-        values.push(towerVal); colors.push('#334155');
-        hoverTexts.push(`<b>${tower.name}</b><br>Total: ${tower.total} | ✔ ${tower.healthy} ⚠ ${tower.warning} ✖ ${tower.failed}`);
+        // Handle empty towers gracefully so they still render
+        const appCount = tower.apps.length > 0 ? tower.apps.length : 1;
 
-        appList.forEach((app, aIdx) => {
-            ids.push(`${towerId}_a${aIdx}`);
+        ids.push(towerId);
+        labels.push(tower.name);
+        parents.push("root");
+        values.push(appCount);
+        customdata.push(`<b>${tower.name}</b><br>Total Apps: ${tower.total}`);
+
+        totalApps += appCount;
+
+        // 3. Applications (Outer Ring)
+        tower.apps.forEach((app, aIdx) => {
+            ids.push(`${towerId}_app_${aIdx}`);
             labels.push(app.name);
             parents.push(towerId);
-            values.push(1);
-            colors.push(COLORS[app.status] || COLORS.not_run);
-            hoverTexts.push(`<b>${app.name}</b><br>Status: ${app.status.replace('_', ' ')}<br>${app.score > 0 ? 'Score: ' + app.score + '%' : 'Not yet run'}`);
+            values.push(1); // Equal visual weight for each application slice
+
+            // Format tooltip info for the dashboard
+            const scoreText = app.score > 0 ? `<br>Score: ${app.score}%` : '<br>Not yet run';
+            const statusText = app.status ? app.status.replace('_', ' ') : 'Unknown';
+            customdata.push(`<b>${app.name}</b><br>Status: ${statusText}${scoreText}`);
         });
     });
 
+    // Update the root value to the total sum so proportions are correct
+    values[0] = totalApps > 0 ? totalApps : 1;
+
     const trace = {
-        type: 'sunburst', ids, labels, parents, values, branchvalues: 'total',
-        marker: { colors, line: { color: '#ffffff', width: 2 } },
-        hovertext: hoverTexts, hovertemplate: '%{hovertext}<extra></extra>',
-        textfont: { family: "'DM Sans',sans-serif", size: 11, color: '#fff' },
-        insidetextorientation: 'tangential', leaf: { opacity: 0.92 }, maxdepth: 3
+        type: "sunburst",
+        ids: ids,
+        labels: labels,
+        parents: parents,
+        values: values,
+        customdata: customdata,
+        branchvalues: "total",
+        hovertemplate: "%{customdata}<extra></extra>",
+        textfont: {
+            family: "'DM Sans', sans-serif",
+            size: 13,
+            color: '#475569'
+        },
+        marker: {
+            // Plotly will automatically use its default vibrant color palette
+            // We just add the clean white borders from your sample image
+            line: { width: 1.5, color: '#ffffff' }
+        }
     };
 
-    Plotly.newPlot('sunburstChart', [trace], { ...LAYOUT_BASE, margin: { t: 10, r: 10, b: 10, l: 10 }, showlegend: false }, CONFIG);
+    const layout = {
+        margin: { t: 20, l: 20, r: 20, b: 20 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor:  'rgba(0,0,0,0)'
+    };
+
+    Plotly.newPlot('sunburstChart', [trace], layout, { displayModeBar: false, responsive: true });
 })();
 
 /* ── 3. Stacked Bar ── */
